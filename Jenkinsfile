@@ -89,13 +89,23 @@ pipeline {
         }
 
         stage('DAST - OWASP ZAP') {
-            steps {
-                sh '''
-                docker run --rm --network host -v "$PWD/reports":/zap/wrk:rw \
-                  ghcr.io/zaproxy/zaproxy:stable \
-                  zap-baseline.py -t http://localhost:5001 -r reporte-zap.html -J reporte-zap.json || true
-                '''
-            }
+         steps {
+             sh '''
+             mkdir -p reports
+             docker rm -f zap-${BUILD_NUMBER} || true
+             docker volume rm zap-wrk-${BUILD_NUMBER} || true
+             docker run --name zap-${BUILD_NUMBER} --user root \
+               --network devsecops-net \
+               -v zap-wrk-${BUILD_NUMBER}:/zap/wrk \
+               ghcr.io/zaproxy/zaproxy:stable \
+               zap-baseline.py -t http://sistema-alumnos-staging:5001/ -r reporte-zap.html -J reporte-zap.json || true
+             docker cp zap-${BUILD_NUMBER}:/zap/wrk/reporte-zap.html reports/reporte-zap.html || true
+             docker cp zap-${BUILD_NUMBER}:/zap/wrk/reporte-zap.json reports/reporte-zap.json || true
+             docker rm -f zap-${BUILD_NUMBER} || true
+             docker volume rm zap-wrk-${BUILD_NUMBER} || true
+             ls -la reports/
+             '''
+         }
         }
 
         stage('Deploy Producción') {
