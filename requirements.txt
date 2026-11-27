@@ -3,3 +3,6 @@ Werkzeug>=3.1.9
 Jinja2>=3.1.6
 gunicorn>=23.0.0
 prometheus-client>=0.21.1
+bandit>=1.8.0
+pip-audit>=2.8.0
+pytest>=8.3.0
