@@ -90,23 +90,7 @@ pipeline {
             steps {
                 sh '''
                 mkdir -p reports
-                .venv/bin/python -c '
-                import os, time, urllib.request, urllib.parse
-                key_path = "/run/secrets/zap_api_key"
-                api_key = open(key_path).read().strip() if os.path.exists(key_path) else os.environ.get("ZAP_API_KEY", "")
-                target = urllib.parse.quote("http://ev3-jenkins:5001/", safe="")
-                def zap_get(path):
-                    req = urllib.request.Request(f"http://ev3-zap:8080{path}", headers={"X-ZAP-API-Key": api_key})
-                    with urllib.request.urlopen(req, timeout=30) as r:
-                        return r.read().decode("utf-8", errors="ignore")
-                print("Spider:", zap_get(f"/JSON/spider/action/scan/?url={target}"))
-                time.sleep(6)
-                print("Active Scan:", zap_get(f"/JSON/ascan/action/scan/?url={target}"))
-                time.sleep(8)
-                html = zap_get("/OTHER/core/other/htmlreport/")
-                open("reports/reporte-zap.html", "w", encoding="utf-8").write(html)
-                print("Reporte generado:", len(html), "bytes")
-                '
+                .venv/bin/python -c 'import os, time, urllib.request, urllib.parse; api_key = open("/run/secrets/zap_api_key").read().strip() if os.path.exists("/run/secrets/zap_api_key") else ""; target = urllib.parse.quote("http://ev3-jenkins:5001/", safe=""); req = lambda p: urllib.request.urlopen(urllib.request.Request(f"http://ev3-zap:8080{p}", headers={"X-ZAP-API-Key": api_key}), timeout=30).read().decode("utf-8", "ignore"); print("Spider:", req(f"/JSON/spider/action/scan/?url={target}")); time.sleep(6); print("Scan:", req(f"/JSON/ascan/action/scan/?url={target}")); time.sleep(8); html = req("/OTHER/core/other/htmlreport/"); open("reports/reporte-zap.html", "w", encoding="utf-8").write(html); print("OK:", len(html), "bytes")'
                 ls -lh reports/reporte-zap.html
                 '''
             }
